@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.io.wavfile as wav
-from scipy.signal import find_peaks, lfilter
+from scipy.signal import find_peaks, lfilter,filtfilt
 from scipy.fftpack import fft
 from numpy.polynomial import Polynomial
 import matplotlib.pyplot as plt
@@ -52,7 +52,7 @@ partialCorr = np.correlate(signal, h, mode='full')
 distance = int(sample_rate // fo)-20
 #-------------------------------------------------------------
 #manual adjust of threshold
-threshold = 20
+threshold = 5
 #-------------------------------------------------------------
 peaks, _ = find_peaks(partialCorr, distance=distance,height=threshold)
 #plot the peaks in the partial correlation
@@ -70,31 +70,40 @@ plt.grid()
 #find distaces between peaks
 distances = np.diff(peaks) 
 distances = distances- np.mean(distances)
-#plot the distances between peaks (jitter)
-plt.figure()  
+#convert distances to milliseconds
+distances = 1000*distances/sample_rate
+
 #create the time axis in seconds
 total = t[-1]   
 t = np.arange(0,total, total/len(distances))
+'''
+#plot the distances between peaks (jitter)
+plt.figure()  
 plt.plot(t,distances)
 plt.grid()
-plt.ylim(-20,20)
+plt.ylim(-0.5,0.5)
 plt.title('Perturbation (jitter)')
 plt.xlabel('time(s)')   
-plt.ylabel('Amplitude')
+plt.ylabel('Jitter Amplitude (ms)')
 #plt.show()
+'''
 #filter the distances
-b, a = [1], [1, -0.95]
-distances = lfilter(b, a, distances)
+a = [1]
+order = 5
+b = np.ones(order)/order
+distances = filtfilt(b, a, distances)
 #plot the filtered distances
 plt.figure()
-plt.plot(t,distances/10)
+plt.plot(t,distances)
 plt.grid()
-plt.ylim(-20,20)
-plt.title('Filtered Perturbation (jitter)')
+plt.ylim(-0.50,0.50)
+plt.title('Long-term Perturbation (jitter)')
 plt.xlabel('time(s)')
-plt.ylabel('Amplitude')
+plt.ylabel('Jitter Amplitude (ms)')
 plt.show()
 #-------------------------------------------------------------
 #-------------------------------------------------------------
+
+    
 
     
